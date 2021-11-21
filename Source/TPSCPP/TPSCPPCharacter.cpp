@@ -1,13 +1,21 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#define PrintString(String) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 1.5, FColor::White,String)
+#define printFString(text, fstring) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT(text), fstring))
 #include "TPSCPPCharacter.h"
+
+#include "DrawDebugHelpers.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "TPSCPPGameMode.h"
+#include "Projectile.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Engine/StaticMeshActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "HoloLens/AllowWindowsPlatformTypes.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATPSCPPCharacter
@@ -40,7 +48,8 @@ ATPSCPPCharacter::ATPSCPPCharacter()
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -56,6 +65,9 @@ void ATPSCPPCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ATPSCPPCharacter::Interact);
+	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &ATPSCPPCharacter::Shoot);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCPPCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATPSCPPCharacter::MoveRight);
@@ -90,12 +102,12 @@ void ATPSCPPCharacter::OnResetVR()
 
 void ATPSCPPCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		Jump();
+	Jump();
 }
 
 void ATPSCPPCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		StopJumping();
+	StopJumping();
 }
 
 void ATPSCPPCharacter::TurnAtRate(float Rate)
@@ -108,6 +120,16 @@ void ATPSCPPCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+int ATPSCPPCharacter::GetHealth()
+{
+	return Health;
+}
+
+void ATPSCPPCharacter::SetHealth(int value)
+{
+	Health = value;
 }
 
 void ATPSCPPCharacter::MoveForward(float Value)
@@ -126,15 +148,75 @@ void ATPSCPPCharacter::MoveForward(float Value)
 
 void ATPSCPPCharacter::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
+
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+// Called every frame
+void ATPSCPPCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (Health <= 0)
+	{
+		Die();
+		this->Destroy();
+	}
+}
+
+void ATPSCPPCharacter::Die()
+{
+	ATPSCPPGameMode* GameMode = Cast<ATPSCPPGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode) GameMode->OnPlayerKilled(GetController());
+}
+
+void ATPSCPPCharacter::Interact()
+{
+	if (CurrentHeldObject)
+	{
+		CurrentHeldObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
+		mesh->SetSimulatePhysics(true);
+		CurrentHeldObject = nullptr;
+	}
+	else
+	{
+		FHitResult OutHit;
+		FVector Start = GetActorLocation();
+		FVector ForwardVector = GetFollowCamera()->GetForwardVector();
+		FVector End = ((ForwardVector * 1500.f) + Start);
+
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1, 0, 5);
+
+		if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_GameTraceChannel1))
+		{
+			if (OutHit.Actor != nullptr)
+			{
+				CurrentHeldObject = OutHit.GetActor();
+				UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
+				mesh->SetSimulatePhysics(false);
+				CurrentHeldObject->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+				CurrentHeldObject->SetActorLocation(this->GetActorLocation() + FVector(50, 50, 0));
+			}
+		}
+	}
+}
+
+void ATPSCPPCharacter::Shoot()
+{
+	ShootDirection = GetActorLocation() + GetFollowCamera()->GetForwardVector() * 5000.f;
+
+	AProjectile* proj = GetWorld()->SpawnActor<AProjectile>((GetActorForwardVector() * 100.f) + GetActorLocation(),FRotator());
+	
+	proj->SetActorScale3D(proj->GetActorScale3D() * 0.12f);
+	proj->SetVelocity(ShootDirection);
 }

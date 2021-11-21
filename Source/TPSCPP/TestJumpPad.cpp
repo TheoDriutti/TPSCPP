@@ -8,22 +8,28 @@
 ATestJumpPad::ATestJumpPad()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CubeSM"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("StaticMesh'/Game/Geometry/Meshes/1M_Cube.1M_Cube'"));
+
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NomMesh"));
+	if (CubeMesh.Succeeded())
+	{
+		StaticMesh->SetStaticMesh(CubeMesh.Object);
+	}
+
 	StaticMesh->SetSimulatePhysics(true);
-	RootComponent = StaticMesh;
-
 	StaticMesh->OnComponentHit.AddDynamic(this, &ATestJumpPad::OnHit);
+
+	RootComponent = StaticMesh;
 }
 
 // Called when the game starts or when spawned
 void ATestJumpPad::BeginPlay()
 {
 	Super::BeginPlay();
-
-	GLog->Log("bonjour");
-
+	
+	GLog->Log("Bonjour");
 }
 
 // Called every frame
@@ -33,14 +39,12 @@ void ATestJumpPad::Tick(float DeltaTime)
 
 }
 
-void ATestJumpPad::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
-	const FHitResult& Hit) {
-
+void ATestJumpPad::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
 	ACharacter* Character = Cast<ACharacter>(OtherActor);
-	if (Character == nullptr) {
+	if (Character == nullptr) //< if (!Character)
 		return;
-	}
+
+	GLog->Log("Launch");
 	Character->LaunchCharacter(FVector(0, 0, 1000), false, true);
 }
-

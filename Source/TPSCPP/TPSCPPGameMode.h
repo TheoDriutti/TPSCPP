@@ -13,6 +13,9 @@ class ATPSCPPGameMode : public AGameModeBase
 
 public:
 	ATPSCPPGameMode();
+
+	UFUNCTION()
+	void OnPlayerKilled(AController* controller);
 };
 
 

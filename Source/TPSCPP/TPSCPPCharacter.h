@@ -29,6 +29,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	UFUNCTION()
+	int GetHealth();
+	UFUNCTION()
+	void SetHealth(int value);
+	UFUNCTION()
+	void Interact();
+	UFUNCTION()
+	void Shoot();
+
+	UFUNCTION()
+	void Die();
+
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -63,10 +75,25 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
+private:
+	UPROPERTY(EditAnywhere)
+	int Health = 100;
+		
+	UPROPERTY(VisibleAnywhere)
+	AActor* CurrentHeldObject;
+	UPROPERTY(VisibleAnywhere)
+	FVector ShootDirection;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(VisibleAnywhere)
+	UClass* ProjectileClass;
 };
 

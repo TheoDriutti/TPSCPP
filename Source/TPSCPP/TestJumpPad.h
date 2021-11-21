@@ -7,11 +7,11 @@
 #include "TestJumpPad.generated.h"
 
 UCLASS()
-class TPSCPP_API ATestJumpPad : public AActor
+class ATestJumpPad : public AActor
 {
 	GENERATED_BODY()
-
-public:
+	
+public:	
 	// Sets default values for this actor's properties
 	ATestJumpPad();
 
@@ -19,15 +19,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UPROPERTY(VisibleAnywhere)
-		UStaticMeshComponent* StaticMesh;
-
-
+	UStaticMeshComponent* StaticMesh;
 };

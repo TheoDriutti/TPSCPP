@@ -37,10 +37,13 @@ public:
 	void Interact();
 	UFUNCTION()
 	void Shoot();
-
 	UFUNCTION()
 	void Die();
-
+	UFUNCTION()
+	void Save();
+	UFUNCTION()
+	void Load(int slot);
+	
 protected:
 
 	/** Resets HMD orientation in VR. */

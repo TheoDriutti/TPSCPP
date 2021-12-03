@@ -6,6 +6,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "MySaveGame.h"
 #include "TPSCPPGameMode.h"
 #include "Projectile.h"
 #include "Camera/CameraComponent.h"
@@ -16,6 +17,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HoloLens/AllowWindowsPlatformTypes.h"
+#include "Kismet/GameplayStatics.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATPSCPPCharacter
@@ -68,6 +70,8 @@ void ATPSCPPCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ATPSCPPCharacter::Interact);
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &ATPSCPPCharacter::Shoot);
+	
+	PlayerInputComponent->BindAction("Save", IE_Pressed, this, &ATPSCPPCharacter::Save);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCPPCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATPSCPPCharacter::MoveRight);
@@ -179,6 +183,24 @@ void ATPSCPPCharacter::Die()
 	if (GameMode) GameMode->OnPlayerKilled(GetController());
 }
 
+void ATPSCPPCharacter::Save()
+{
+	UMySaveGame* SaveGame = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
+	SaveGame->PlayerLocation = this->GetActorLocation();
+	FString slotName = "Slot " + UMySaveGame::slotCounter;
+	PrintString(slotName);
+	UGameplayStatics::SaveGameToSlot(SaveGame, slotName, 0);
+	UMySaveGame::slotCounter++;
+}
+
+void ATPSCPPCharacter::Load(int slot)
+{
+	UMySaveGame* SaveGame = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
+	FString slotName = "Slot " + slot;
+	SaveGame = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(slotName, 0));
+	this->SetActorLocation(SaveGame->PlayerLocation);
+}
+
 void ATPSCPPCharacter::Interact()
 {
 	if (CurrentHeldObject)
@@ -215,8 +237,9 @@ void ATPSCPPCharacter::Shoot()
 {
 	ShootDirection = GetActorLocation() + GetFollowCamera()->GetForwardVector() * 5000.f;
 
-	AProjectile* proj = GetWorld()->SpawnActor<AProjectile>((GetActorForwardVector() * 100.f) + GetActorLocation(),FRotator());
-	
+	AProjectile* proj = GetWorld()->SpawnActor<AProjectile>((GetActorForwardVector() * 100.f) + GetActorLocation(),
+	                                                        FRotator());
+
 	proj->SetActorScale3D(proj->GetActorScale3D() * 0.12f);
 	proj->SetVelocity(ShootDirection);
 }

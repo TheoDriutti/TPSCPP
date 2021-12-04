@@ -14,11 +14,12 @@ class TPSCPP_API UMySaveGame : public USaveGame
 {
 	GENERATED_BODY()
 	
-	public :
+public:
 	UMySaveGame();
 	
 	UPROPERTY(EditAnywhere)
 	FVector PlayerLocation;
 
-	static int slotCounter = 0;
+	static int slotCounter;
+	static int slotToInstantiate;
 };

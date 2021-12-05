@@ -39,10 +39,6 @@ public:
 	void Shoot();
 	UFUNCTION()
 	void Die();
-	UFUNCTION()
-	void Save();
-	UFUNCTION()
-	void Load(int slot);
 	
 protected:
 

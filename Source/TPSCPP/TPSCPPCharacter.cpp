@@ -1,12 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#define PrintString(String) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 1.5, FColor::White,String)
-#define printFString(text, fstring) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT(text), fstring))
 #include "TPSCPPCharacter.h"
 
 #include "DrawDebugHelpers.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
-#include "MySaveGame.h"
 #include "TPSCPPGameMode.h"
 #include "Projectile.h"
 #include "Camera/CameraComponent.h"
@@ -73,8 +70,6 @@ void ATPSCPPCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ATPSCPPCharacter::Interact);
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &ATPSCPPCharacter::Shoot);
 	
-	PlayerInputComponent->BindAction("Save", IE_Pressed, this, &ATPSCPPCharacter::Save);
-
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCPPCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATPSCPPCharacter::MoveRight);
 
@@ -183,24 +178,6 @@ void ATPSCPPCharacter::Die()
 {
 	ATPSCPPGameMode* GameMode = Cast<ATPSCPPGameMode>(GetWorld()->GetAuthGameMode());
 	if (GameMode) GameMode->OnPlayerKilled(GetController());
-}
-
-void ATPSCPPCharacter::Save()
-{
-	UMySaveGame* SaveGame = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
-	SaveGame->PlayerLocation = this->GetActorLocation();
-	FString slotName = "Slot " + UMySaveGame::slotCounter;
-	PrintString(slotName);
-	UGameplayStatics::SaveGameToSlot(SaveGame, slotName, 0);
-	UMySaveGame::slotCounter++;
-}
-
-void ATPSCPPCharacter::Load(int slot)
-{
-	UMySaveGame* SaveGame = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
-	FString slotName = "Slot " + slot;
-	SaveGame = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(slotName, 0));
-	this->SetActorLocation(SaveGame->PlayerLocation);
 }
 
 void ATPSCPPCharacter::Interact()

@@ -1,11 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#define PrintString(String) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 1.5, FColor::White,String)
-#define printFString(text, fstring) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT(text), fstring))
+#include "Projectile.h"
 #include "Engine/DecalActor.h"
 #include "Components/DecalComponent.h"
-#include "Projectile.h"
-#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -41,7 +38,6 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::Hit(const FHitResult& OutHit)
 {
-	PrintString("Hit");
 	FRotator rotation = (OutHit.ImpactNormal * (-1.f)).XAxisVector.Rotation();
 	ADecalActor* decal = GetWorld()->SpawnActor<ADecalActor>(OutHit.Location, rotation);
 	decal->SetActorScale3D(decal->GetActorScale3D() * 0.3f);

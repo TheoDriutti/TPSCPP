@@ -67,7 +67,7 @@ void ATPSCPPCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ATPSCPPCharacter::Interact);
+	// PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ATPSCPPCharacter::Interact);
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &ATPSCPPCharacter::Shoot);
 	
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATPSCPPCharacter::MoveForward);
@@ -182,34 +182,34 @@ void ATPSCPPCharacter::Die()
 
 void ATPSCPPCharacter::Interact()
 {
-	if (CurrentHeldObject)
-	{
-		CurrentHeldObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
-		mesh->SetSimulatePhysics(true);
-		CurrentHeldObject = nullptr;
-	}
-	else
-	{
-		FHitResult OutHit;
-		FVector Start = GetActorLocation();
-		FVector ForwardVector = GetFollowCamera()->GetForwardVector();
-		FVector End = ((ForwardVector * 1500.f) + Start);
-
-		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1, 0, 5);
-
-		if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_GameTraceChannel1))
-		{
-			if (OutHit.Actor != nullptr)
-			{
-				CurrentHeldObject = OutHit.GetActor();
-				UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
-				mesh->SetSimulatePhysics(false);
-				CurrentHeldObject->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-				CurrentHeldObject->SetActorLocation(this->GetActorLocation() + FVector(50, 50, 0));
-			}
-		}
-	}
+	// if (CurrentHeldObject)
+	// {
+	// 	CurrentHeldObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	// 	UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
+	// 	mesh->SetSimulatePhysics(true);
+	// 	CurrentHeldObject = nullptr;
+	// }
+	// else
+	// {
+	// 	FHitResult OutHit;
+	// 	FVector Start = GetActorLocation();
+	// 	FVector ForwardVector = GetFollowCamera()->GetForwardVector();
+	// 	FVector End = ((ForwardVector * 1500.f) + Start);
+	//
+	// 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1, 0, 5);
+	//
+	// 	if (GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_GameTraceChannel1))
+	// 	{
+	// 		if (OutHit.Actor != nullptr)
+	// 		{
+	// 			CurrentHeldObject = OutHit.GetActor();
+	// 			UStaticMeshComponent* mesh = Cast<AStaticMeshActor>(CurrentHeldObject)->GetStaticMeshComponent();
+	// 			mesh->SetSimulatePhysics(false);
+	// 			CurrentHeldObject->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+	// 			CurrentHeldObject->SetActorLocation(this->GetActorLocation() + FVector(50, 50, 0));
+	// 		}
+	// 	}
+	// }
 }
 
 void ATPSCPPCharacter::Shoot()
